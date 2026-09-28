@@ -1,0 +1,93 @@
+[
+  {
+    "id": "inspect_basic",
+    "query": "Inspecte les états financiers.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["inspect_financial_statement"]
+  },
+  {
+    "id": "profitability_basic",
+    "query": "Calcule les ratios de rentabilité.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_profitability_ratios"]
+  },
+  {
+    "id": "profitability_indirect",
+    "query": "Est-ce que cette entreprise est rentable ?",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_profitability_ratios"]
+  },
+  {
+    "id": "liquidity_basic",
+    "query": "Calcule les ratios de liquidité.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_liquidity_ratios"]
+  },
+  {
+    "id": "leverage_basic",
+    "query": "Calcule les ratios d'endettement.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_leverage_ratios"]
+  },
+  {
+    "id": "leverage_indirect",
+    "query": "L'entreprise est-elle trop endettée ?",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_leverage_ratios"]
+  },
+  {
+    "id": "trend_basic",
+    "query": "Quelle est la tendance du chiffre d'affaires et du résultat net ?",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["analyze_trend"]
+  },
+  {
+    "id": "turnover_basic",
+    "query": "Calcule les ratios de rotation (stocks, clients, fournisseurs).",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_turnover_ratios"]
+  },
+  {
+    "id": "bfr_basic",
+    "query": "Calcule le besoin en fonds de roulement.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_working_capital_requirement"]
+  },
+  {
+    "id": "bfr_missing_columns",
+    "query": "Calcule le besoin en fonds de roulement.",
+    "dataset_path": "entreprise_b.csv",
+    "expected_tools": ["compute_working_capital_requirement"]
+  },
+  {
+    "id": "health_score_basic",
+    "query": "Calcule le score de santé financière de l'entreprise.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["compute_financial_health_score"]
+  },
+  {
+    "id": "multi_tool_inspect_then_ratios",
+    "query": "Inspecte les états financiers puis calcule les ratios de rentabilité et de liquidité.",
+    "dataset_path": "etats_financiers.csv",
+    "expected_tools": ["inspect_financial_statement", "compute_profitability_ratios", "compute_liquidity_ratios"]
+  },
+  {
+    "id": "compare_two_companies",
+    "query": "Compare ces deux entreprises et dis-moi laquelle est en meilleure santé financière.",
+    "dataset_path": "etats_financiers.csv",
+    "dataset_path_b": "entreprise_b.csv",
+    "expected_tools": ["compare_financial_statements"]
+  },
+  {
+    "id": "real_data_health_score",
+    "query": "Calcule le score de santé financière de cette entreprise.",
+    "dataset_path": "apple_reelles.csv",
+    "expected_tools": ["compute_financial_health_score"]
+  },
+  {
+    "id": "real_data_turnover",
+    "query": "Quels sont les ratios de rotation sur ces données ?",
+    "dataset_path": "apple_reelles.csv",
+    "expected_tools": ["compute_turnover_ratios"]
+  }
+]

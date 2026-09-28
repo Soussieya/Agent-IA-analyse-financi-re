@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+langgraph>=0.2
+langchain-core
+langchain-ollama>=0.2
+langchain-chroma
+chromadb
+pandas
+pydantic
