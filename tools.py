@@ -59,27 +59,41 @@ class UnsafeDatasetPathError(PermissionError):
 
 
 def _resolve_dataset_path(dataset_path: str) -> Path:
-    """Résout dataset_path par rapport à DATASET_DIR et vérifie qu'il n'en sort pas.
+    """Résout un chemin de dataset dans DATASET_DIR de manière sécurisée.
 
-    Deux attaques bloquées :
-    - chemin absolu fourni directement (ex: "C:\\Users\\...\\secret.csv")
-    - remontée de répertoire (ex: "../../secret.csv")
+    Accepte par exemple :
+    - "apple_reelles.csv"
+    - "data/apple_reelles.csv"
+    - "entreprise_b.csv"
+
+    Les chemins absolus et les chemins sortant de DATASET_DIR sont refusés.
     """
     raw = Path(dataset_path)
+
+    # Les chemins absolus sont interdits pour éviter l'accès à des fichiers
+    # arbitraires sur la machine.
     if raw.is_absolute():
         raise UnsafeDatasetPathError(
             f"Chemin non autorisé : '{dataset_path}' est un chemin absolu. "
             f"Donne un chemin relatif au répertoire de données ({DATASET_DIR})."
         )
 
+    # Si l'utilisateur fournit "data/fichier.csv" alors que DATASET_DIR
+    # pointe déjà vers ".../data", on retire le préfixe "data/".
+    parts = raw.parts
+    if parts and parts[0].lower() == DATASET_DIR.name.lower():
+        raw = Path(*parts[1:])
+
     candidate = (DATASET_DIR / raw).resolve()
+
+    # Protection contre ../ et toute sortie du répertoire autorisé.
     try:
         candidate.relative_to(DATASET_DIR)
     except ValueError:
         raise UnsafeDatasetPathError(
             f"Chemin non autorisé : '{dataset_path}' sort du répertoire de données "
             f"autorisé ({DATASET_DIR})."
-        ) from None
+        )
 
     return candidate
 
