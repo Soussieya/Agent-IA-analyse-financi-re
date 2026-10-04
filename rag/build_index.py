@@ -64,7 +64,8 @@ def build_index() -> int:
         raise SystemExit(f"Aucun document trouvé dans {KNOWLEDGE_DIR}")
 
     print(f"\nCalcul des embeddings avec '{EMBEDDING_MODEL}' (Ollama doit être lancé)...")
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or None
+    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=ollama_base_url)
 
     Chroma.from_documents(
         documents=all_docs,

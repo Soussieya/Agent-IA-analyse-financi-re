@@ -45,6 +45,12 @@ from tools import ALL_TOOLS
 # malgré la capacité "tools" déclarée par Ollama.
 DEFAULT_MODEL = os.environ.get("FINANCEAGENT_MODEL", "llama3.1:8b")
 
+# Adresse du serveur Ollama. None = comportement par défaut de ChatOllama
+# (http://localhost:11434), correct en usage normal (hors conteneur).
+# Dans Docker, Ollama tourne sur la machine hôte, pas dans le conteneur :
+# docker-compose.yml fixe cette variable à http://host.docker.internal:11434.
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL") or None
+
 SYSTEM_PROMPT = SystemMessage(
     content=(
         "Tu es FinanceAgent, un agent d'analyse d'états financiers d'entreprise. "
@@ -78,7 +84,7 @@ def build_graph(model_name: str = DEFAULT_MODEL):
     modèle différent sans modifier ce fichier — c'est ce que fait
     evals/run_eval.py pour comparer plusieurs modèles.
     """
-    llm = ChatOllama(model=model_name, temperature=0)
+    llm = ChatOllama(model=model_name, temperature=0, base_url=OLLAMA_BASE_URL)
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
 
     def call_model(state: MessagesState) -> dict:

@@ -1,0 +1,946 @@
+# Mission
+
+Je veux transformer mon projet **FinanceAgent** existant en une véritable application d'entreprise utilisable en production.
+
+**Important : ne repars pas de zéro.** Analyse d'abord le code existant, son architecture, ses fonctionnalités et ses limites. Conserve ce qui fonctionne déjà et améliore progressivement le projet sans casser les fonctionnalités existantes.
+
+Le projet actuel est un **agent IA local d'analyse financière** basé sur :
+
+* Python
+* FastAPI
+* LangGraph
+* Ollama
+* Llama 3.1 8B
+* Chroma
+* embeddings locaux `nomic-embed-text`
+* RAG
+* outils financiers Python déterministes
+* dashboard HTML
+* benchmark de tool-calling
+* données CSV
+* architecture 100 % locale
+
+L'objectif final est d'obtenir une **plateforme sécurisée d'analyse financière assistée par IA**, avec une architecture propre, testée, documentée et déployable.
+
+---
+
+# 1. Fonctionnalités existantes à préserver
+
+Le projet possède déjà un agent LangGraph capable de sélectionner dynamiquement des outils financiers.
+
+Les outils existants comprennent notamment :
+
+* `inspect_financial_statement`
+* `compute_profitability_ratios`
+* `compute_liquidity_ratios`
+* `compute_leverage_ratios`
+* `analyze_trend`
+* `compute_turnover_ratios`
+* `compute_working_capital_requirement`
+* `compute_financial_health_score`
+* `compare_financial_statements`
+* `search_financial_knowledge`
+
+Les calculs financiers doivent rester **déterministes et réalisés par du code Python**, et non inventés par le LLM.
+
+Le LLM doit principalement :
+
+1. comprendre la demande ;
+2. sélectionner le ou les outils appropriés ;
+3. fournir une explication claire du résultat.
+
+Les résultats numériques des outils doivent rester la source de vérité.
+
+Le projet possède également un RAG local avec Chroma et des embeddings Ollama.
+
+Le projet possède déjà un benchmark de tool-calling permettant de comparer plusieurs modèles locaux.
+
+**Ne supprime aucune de ces fonctionnalités.**
+
+---
+
+# 2. Objectif principal
+
+Transformer le projet en une plateforme ressemblant à ceci :
+
+```text
+                    USER
+                     │
+                     ▼
+              WEB DASHBOARD
+                     │
+                     ▼
+                FASTAPI API
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+   Authentication         File Upload
+          │                     │
+          │             PDF / Excel / CSV
+          │                     │
+          │                     ▼
+          │             Data Extraction
+          │                     │
+          │                     ▼
+          │             Data Validation
+          │                     │
+          └──────────────┬──────┘
+                         ▼
+                  NORMALIZED DATA
+                         │
+                         ▼
+                  LANGGRAPH AGENT
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+   Financial Tools      RAG       Risk Detection
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                  ANALYSIS RESULT
+                         │
+             ┌───────────┼───────────┐
+             ▼           ▼           ▼
+         Dashboard     PDF Report   Database
+```
+
+---
+
+# 3. Ingestion des données
+
+Ajouter une vraie ingestion de données.
+
+L'utilisateur doit pouvoir importer :
+
+* CSV
+* Excel
+* PDF de rapports financiers
+
+Le système doit transformer les données vers un format financier normalisé.
+
+Pipeline :
+
+```text
+PDF / Excel / CSV
+       ↓
+Extraction
+       ↓
+Mapping des colonnes
+       ↓
+Validation
+       ↓
+Normalisation
+       ↓
+Financial Agent
+```
+
+Pour les PDF :
+
+* extraction de texte ;
+* extraction de tableaux lorsque possible ;
+* OCR si nécessaire ;
+* identification des périodes ;
+* identification des postes financiers.
+
+Prévoir une architecture modulaire afin que le parser PDF puisse évoluer.
+
+---
+
+# 4. Validation des données
+
+Créer un véritable module de validation.
+
+Avant toute analyse :
+
+* vérifier les colonnes ;
+* vérifier les types ;
+* vérifier les périodes ;
+* détecter les doublons ;
+* détecter les valeurs manquantes ;
+* détecter les valeurs incohérentes ;
+* détecter les divisions potentielles par zéro ;
+* vérifier les relations comptables lorsque possible.
+
+Exemple :
+
+```text
+⚠ Missing data
+
+accounts_receivable
+inventory
+cash
+```
+
+Le système doit expliquer clairement quelles analyses sont impossibles ou approximatives.
+
+Ne jamais masquer silencieusement une donnée manquante.
+
+---
+
+# 5. Gestion des entreprises
+
+Ne plus dépendre uniquement de fichiers CSV nommés manuellement.
+
+Créer une notion d'entreprise :
+
+```text
+Company
+ ├── Financial Statements
+ ├── Documents
+ ├── Analyses
+ ├── Reports
+ └── History
+```
+
+L'utilisateur doit pouvoir :
+
+* créer une entreprise ;
+* importer ses documents ;
+* consulter ses anciennes analyses ;
+* comparer plusieurs périodes ;
+* comparer deux entreprises lorsqu'il y a suffisamment de données.
+
+---
+
+# 6. Base de données
+
+Introduire une base de données adaptée à l'application.
+
+Utiliser par exemple :
+
+* PostgreSQL pour une architecture production ;
+* SQLite éventuellement pour le développement local.
+
+Prévoir des modèles pour :
+
+* users
+* companies
+* documents
+* financial statements
+* analyses
+* reports
+* audit logs
+
+Ne pas stocker inutilement les données financières sensibles dans les logs.
+
+---
+
+# 7. Authentification et autorisation
+
+Ajouter une authentification complète.
+
+Prévoir :
+
+```text
+Admin
+ ├── manage users
+ ├── manage companies
+ └── access all analyses
+
+Analyst
+ ├── upload documents
+ ├── run analyses
+ └── generate reports
+
+Viewer
+ └── view authorized analyses
+```
+
+Implémenter :
+
+* password hashing ;
+* sessions ou JWT ;
+* logout ;
+* protection des endpoints ;
+* contrôle d'accès par utilisateur/organisation ;
+* isolation des données entre utilisateurs.
+
+Un utilisateur ne doit jamais pouvoir accéder aux données d'une autre entreprise à laquelle il n'a pas accès.
+
+---
+
+# 8. Sécurité des fichiers
+
+Sécuriser totalement les uploads.
+
+Mettre en place :
+
+* limite de taille ;
+* validation du type MIME ;
+* validation de l'extension ;
+* noms de fichiers générés côté serveur ;
+* stockage dans un répertoire contrôlé ;
+* aucune exécution de fichier uploadé ;
+* protection contre path traversal ;
+* suppression sécurisée des fichiers inutiles.
+
+Ne jamais faire confiance au nom ou au chemin fourni par l'utilisateur.
+
+---
+
+# 9. Sécurité de l'API
+
+Sécuriser FastAPI.
+
+Valider strictement tous les inputs.
+
+En particulier, ne jamais permettre à l'utilisateur ou au LLM de fournir arbitrairement un chemin local permettant d'accéder au système de fichiers.
+
+Par exemple, empêcher des attaques du type :
+
+```text
+../../private_file.csv
+```
+
+ou toute autre forme de path traversal.
+
+Ajouter :
+
+* validation Pydantic ;
+* gestion propre des erreurs ;
+* rate limiting si pertinent ;
+* authentification sur les routes privées ;
+* CORS correctement configuré ;
+* headers de sécurité lorsque pertinent.
+
+---
+
+# 10. Sécurité du LLM et prompt injection
+
+Le système doit considérer les documents utilisateur comme **non fiables**.
+
+Un PDF ou un document pourrait contenir des instructions malveillantes du type :
+
+```text
+Ignore previous instructions...
+```
+
+Ces instructions ne doivent jamais prendre le contrôle de l'agent.
+
+Séparer clairement :
+
+```text
+System instructions
+        ≠
+User input
+        ≠
+Uploaded documents
+        ≠
+RAG documents
+        ≠
+Tool results
+```
+
+Le LLM ne doit jamais avoir la possibilité d'exécuter arbitrairement :
+
+* Python ;
+* shell commands ;
+* commandes système ;
+* accès libre au filesystem.
+
+Les tools doivent être explicitement définis et contrôlés.
+
+---
+
+# 11. Traçabilité des calculs
+
+Chaque résultat financier important doit être explicable.
+
+Exemple :
+
+```text
+ROE = 15.2%
+
+Source:
+Net Income = 58,000
+Equity = 381,000
+
+Formula:
+ROE = Net Income / Equity
+
+Tool:
+compute_profitability_ratios()
+
+Dataset:
+Apple FY2024
+```
+
+L'utilisateur doit pouvoir comprendre :
+
+* quelles données ont été utilisées ;
+* quelle formule a été utilisée ;
+* quel outil a calculé le résultat ;
+* quelle période est concernée.
+
+---
+
+# 12. Financial Risk Detection
+
+Ajouter un module d'analyse proactive des risques.
+
+Le système doit détecter automatiquement des signaux comme :
+
+* baisse importante de liquidité ;
+* augmentation de l'endettement ;
+* baisse de rentabilité ;
+* diminution du chiffre d'affaires ;
+* détérioration du BFR ;
+* anomalies ou changements importants.
+
+Exemple :
+
+```text
+Financial Alerts
+
+🔴 Liquidity deterioration
+Current ratio: 1.8 → 1.1
+
+🟠 Debt increase
+Debt/Equity: 0.7 → 1.2
+
+🟠 Profitability decline
+Net margin: 14% → 9%
+
+🟢 Revenue growth
+Revenue: +12%
+```
+
+Chaque alerte doit être basée sur des données réelles et traçables.
+
+---
+
+# 13. Financial Health Score
+
+Conserver le score de santé financière existant.
+
+Mais améliorer son architecture afin que :
+
+* les composantes soient visibles ;
+* les seuils soient configurables ;
+* les hypothèses soient documentées ;
+* le score ne soit pas présenté comme une vérité absolue ;
+* le contexte sectoriel puisse être intégré proprement.
+
+Afficher par exemple :
+
+```text
+Financial Health Score: 82/100
+
+Profitability: 18/25
+Liquidity:     21/25
+Leverage:      19/25
+Trend:         24/25
+```
+
+---
+
+# 14. RAG professionnel
+
+Conserver le RAG local mais améliorer sa structure.
+
+Les documents doivent être clairement séparés entre :
+
+```text
+Definitions
+Industry benchmarks
+Accounting concepts
+Financial methodology
+```
+
+Pour les benchmarks sectoriels, ne pas présenter des valeurs illustratives comme des statistiques officielles.
+
+Lorsque des données professionnelles sont utilisées, conserver :
+
+* source ;
+* date ;
+* secteur ;
+* pays/région ;
+* méthodologie.
+
+Les réponses RAG doivent idéalement afficher leurs sources.
+
+---
+
+# 15. Dashboard professionnel
+
+Transformer le dashboard actuel en véritable interface d'entreprise.
+
+Prévoir :
+
+### Dashboard principal
+
+```text
+Company
+Financial Health Score
+
+Revenue
+Net Income
+ROE
+ROA
+Liquidity
+Debt
+BFR
+```
+
+Avec graphiques :
+
+* revenue evolution ;
+* net income evolution ;
+* margins ;
+* ROE/ROA ;
+* debt ;
+* liquidity ;
+* working capital ;
+* financial health score.
+
+Prévoir également :
+
+* liste des entreprises ;
+* historique des analyses ;
+* documents ;
+* alertes ;
+* rapports ;
+* interface de chat avec l'agent.
+
+---
+
+# 16. Génération de rapports
+
+Ajouter la possibilité de générer automatiquement un rapport financier.
+
+Le rapport doit contenir :
+
+```text
+Financial Analysis Report
+
+Company
+Period
+
+Executive Summary
+
+Financial Health
+
+Profitability
+
+Liquidity
+
+Leverage
+
+Working Capital
+
+Trend Analysis
+
+Risk Alerts
+
+Key Findings
+
+Data Sources
+```
+
+Formats souhaités :
+
+* PDF ;
+* Excel si pertinent.
+
+Les chiffres du rapport doivent provenir des outils déterministes et non être inventés par le LLM.
+
+---
+
+# 17. Historique
+
+Chaque analyse doit être sauvegardée.
+
+L'utilisateur doit pouvoir :
+
+```text
+Analysis History
+
+01/10/2026
+Apple
+Financial health analysis
+
+28/09/2026
+Company B
+Liquidity analysis
+```
+
+Pouvoir rouvrir une ancienne analyse.
+
+---
+
+# 18. Tests
+
+Créer une vraie suite de tests.
+
+Structure souhaitée :
+
+```text
+tests/
+├── unit/
+│   ├── test_profitability.py
+│   ├── test_liquidity.py
+│   ├── test_leverage.py
+│   ├── test_bfr.py
+│   ├── test_health_score.py
+│   └── test_validation.py
+│
+├── integration/
+│   ├── test_agent.py
+│   ├── test_api.py
+│   └── test_upload.py
+│
+└── security/
+    ├── test_auth.py
+    ├── test_authorization.py
+    ├── test_path_traversal.py
+    └── test_upload_security.py
+```
+
+Tester notamment :
+
+* division par zéro ;
+* données manquantes ;
+* CSV invalide ;
+* mauvais format ;
+* période manquante ;
+* utilisateur non autorisé ;
+* fichier trop volumineux ;
+* path traversal ;
+* prompt injection.
+
+---
+
+# 19. Benchmark IA
+
+Conserver le benchmark actuel des modèles locaux.
+
+Améliorer progressivement pour mesurer :
+
+* tool-calling success rate ;
+* correct tool selection ;
+* task success ;
+* unnecessary tool calls ;
+* latency ;
+* RAG retrieval quality ;
+* réponse finale.
+
+Le benchmark doit rester reproductible.
+
+Ne pas sacrifier la reproductibilité simplement pour obtenir des résultats plus impressionnants.
+
+---
+
+# 20. CI/CD
+
+Ajouter une vraie pipeline GitHub Actions.
+
+Structure :
+
+```text
+.github/
+└── workflows/
+    ├── ci.yml
+    ├── security.yml
+    └── cd.yml
+```
+
+### CI
+
+À chaque Pull Request :
+
+```text
+Checkout
+↓
+Install dependencies
+↓
+Lint
+↓
+Format check
+↓
+Unit tests
+↓
+API tests
+↓
+Integration tests
+```
+
+### Security CI
+
+Ajouter autant que raisonnablement possible :
+
+```text
+Dependency scan
+Secret scan
+Static analysis
+Docker image scan
+```
+
+### Agent evaluation
+
+Le benchmark IA peut être exécuté séparément pour éviter de ralentir inutilement chaque Pull Request.
+
+### CD
+
+Après validation :
+
+```text
+Tests ✓
+   ↓
+Docker build
+   ↓
+Docker image
+   ↓
+Deployment
+```
+
+---
+
+# 21. Docker
+
+Créer :
+
+```text
+Dockerfile
+docker-compose.yml
+```
+
+Prévoir une architecture permettant de lancer localement :
+
+```text
+FastAPI
+PostgreSQL
+Ollama
+```
+
+L'objectif est qu'une nouvelle personne puisse démarrer le projet avec une procédure simple et reproductible.
+
+---
+
+# 22. Monitoring et audit
+
+Ajouter des logs structurés.
+
+Suivre :
+
+* erreurs ;
+* temps de réponse ;
+* appels API ;
+* appels tools ;
+* échecs du LLM ;
+* analyses exécutées.
+
+Ne jamais exposer inutilement les données financières sensibles dans les logs.
+
+Ajouter également un audit trail pour les actions importantes :
+
+```text
+User
+Timestamp
+Action
+Company
+Tool used
+Status
+```
+
+---
+
+# 23. Configuration
+
+Centraliser la configuration.
+
+Utiliser des variables d'environnement pour :
+
+* database URL ;
+* JWT secret ;
+* application environment ;
+* Ollama model ;
+* embedding model ;
+* upload limits ;
+* logging level.
+
+Ne jamais commit de secrets.
+
+Créer :
+
+```text
+.env.example
+```
+
+mais jamais `.env`.
+
+---
+
+# 24. Documentation
+
+Mettre à jour le README pour expliquer :
+
+1. Architecture
+2. Fonctionnalités
+3. Installation
+4. Configuration
+5. Sécurité
+6. API
+7. Data format
+8. RAG
+9. Agent architecture
+10. Tests
+11. Benchmark
+12. Docker
+13. CI/CD
+14. Deployment
+15. Limitations
+16. Future improvements
+
+Ajouter une architecture diagram.
+
+Ajouter des exemples d'utilisation.
+
+---
+
+# 25. Qualité du code
+
+Avant toute modification :
+
+1. analyser le repository ;
+2. identifier les fichiers existants ;
+3. comprendre les dépendances ;
+4. comprendre l'architecture actuelle ;
+5. identifier ce qui fonctionne ;
+6. identifier ce qui doit être amélioré.
+
+Ne pas réécrire inutilement le projet.
+
+Utiliser :
+
+* séparation claire des responsabilités ;
+* modules indépendants ;
+* type hints ;
+* gestion des erreurs ;
+* configuration centralisée ;
+* documentation ;
+* tests.
+
+---
+
+# 26. Ordre d'implémentation
+
+Ne développe pas tout en même temps.
+
+Procède par étapes :
+
+### Phase 1 — Stabilisation
+
+* analyser le code existant ;
+* corriger bugs ;
+* ajouter tests unitaires ;
+* améliorer validation ;
+* conserver les fonctionnalités existantes.
+
+### Phase 2 — Sécurité
+
+* authentication ;
+* authorization ;
+* RBAC ;
+* secure upload ;
+* path traversal protection ;
+* API security ;
+* prompt injection protection ;
+* secrets management.
+
+### Phase 3 — Data platform
+
+* PostgreSQL ;
+* companies ;
+* documents ;
+* financial statements ;
+* analysis history.
+
+### Phase 4 — Ingestion
+
+* CSV ;
+* Excel ;
+* PDF ;
+* extraction ;
+* validation ;
+* normalization.
+
+### Phase 5 — Product
+
+* dashboard professionnel ;
+* risk detection ;
+* financial alerts ;
+* reports PDF/Excel ;
+* traceability.
+
+### Phase 6 — DevOps
+
+* Docker ;
+* GitHub Actions ;
+* CI ;
+* security scanning ;
+* CD ;
+* deployment documentation.
+
+### Phase 7 — IA avancée
+
+* RAG amélioré ;
+* source attribution ;
+* sector-aware analysis ;
+* benchmark RAG ;
+* benchmark LLM plus complet.
+
+---
+
+# 27. Règles importantes
+
+* Ne supprime pas les fonctionnalités existantes sans justification.
+* Ne remplace pas les calculs financiers Python par des calculs LLM.
+* Ne donne jamais au LLM un accès arbitraire au système.
+* Ne stocke pas de secrets dans Git.
+* Ne fais pas confiance aux fichiers uploadés.
+* Ne présente pas des benchmarks sectoriels illustratifs comme des données officielles.
+* Ne masque pas les données financières manquantes.
+* Toutes les nouvelles fonctionnalités doivent être testées.
+* Toute fonctionnalité de sécurité doit avoir au moins un test correspondant.
+* Maintiens la possibilité d'exécuter le projet entièrement en local.
+* Privilégie une architecture réellement utilisable plutôt qu'une démonstration artificiellement complexe.
+
+---
+
+# 28. Résultat attendu
+
+À la fin, je veux obtenir un projet qui ressemble davantage à une **plateforme professionnelle de Financial AI** qu'à un simple chatbot.
+
+L'utilisateur doit pouvoir :
+
+```text
+1. Se connecter
+2. Créer/sélectionner une entreprise
+3. Importer un PDF / Excel / CSV
+4. Faire valider les données
+5. Poser une question en langage naturel
+6. Laisser l'agent sélectionner les tools
+7. Obtenir des calculs fiables
+8. Voir les sources et formules
+9. Voir les tendances et risques
+10. Consulter son historique
+11. Générer un rapport PDF
+12. Comparer des entreprises
+```
+
+Et côté ingénierie :
+
+```text
+Secure
++ Tested
++ Auditable
++ Dockerized
++ CI/CD
++ Local LLM
++ RAG
++ Agentic AI
++ Deterministic Financial Tools
++ Production-oriented Architecture
+```
+
+**Commence par analyser le repository actuel et produire un plan de modification précis fichier par fichier. Ensuite implémente les changements progressivement. Ne réécris pas tout le projet d'un seul coup.**

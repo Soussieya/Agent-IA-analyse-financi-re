@@ -1,0 +1,22 @@
+services:
+  financeagent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Ollama tourne sur la machine hôte (Windows/Mac), pas dans ce conteneur.
+      # host.docker.internal est le nom DNS spécial fourni par Docker Desktop
+      # pour joindre l'hôte depuis l'intérieur d'un conteneur.
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - FINANCEAGENT_MODEL=llama3.1:8b
+      # Les CSV et l'index RAG vivent HORS de l'image (montés en volumes
+      # ci-dessous), pour ne pas avoir à reconstruire l'image à chaque
+      # nouveau fichier de données.
+      - FINANCEAGENT_DATASET_DIR=/app/data
+    volumes:
+      - ./data:/app/data
+      - ./rag/chroma_db:/app/rag/chroma_db
+    extra_hosts:
+      # Nécessaire sous Linux (Docker Desktop Windows/Mac le fournit déjà
+      # nativement) pour que host.docker.internal fonctionne partout.
+      - "host.docker.internal:host-gateway"

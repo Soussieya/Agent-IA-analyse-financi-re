@@ -34,10 +34,54 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 from langchain_core.tools import tool
+
+# --------------------------------------------------------------------------
+# Sécurité : répertoire de données autorisé (anti path traversal)
+# --------------------------------------------------------------------------
+# Tous les chemins de dataset fournis par l'utilisateur (ou halluciné/choisi
+# par le LLM) sont résolus PAR RAPPORT à ce répertoire, et on vérifie que le
+# résultat reste bien à l'intérieur. Sans ça, un chemin comme
+# "../../../Users/quelquun/document_prive.csv" serait lu sans broncher.
+# Configurable via la variable d'environnement FINANCEAGENT_DATASET_DIR ;
+# par défaut, le dossier du projet (où se trouve ce fichier).
+DATASET_DIR = Path(
+    os.environ.get("FINANCEAGENT_DATASET_DIR", os.path.dirname(os.path.abspath(__file__)))
+).resolve()
+
+
+class UnsafeDatasetPathError(PermissionError):
+    """Levée quand un chemin de dataset sort du répertoire autorisé (DATASET_DIR)."""
+
+
+def _resolve_dataset_path(dataset_path: str) -> Path:
+    """Résout dataset_path par rapport à DATASET_DIR et vérifie qu'il n'en sort pas.
+
+    Deux attaques bloquées :
+    - chemin absolu fourni directement (ex: "C:\\Users\\...\\secret.csv")
+    - remontée de répertoire (ex: "../../secret.csv")
+    """
+    raw = Path(dataset_path)
+    if raw.is_absolute():
+        raise UnsafeDatasetPathError(
+            f"Chemin non autorisé : '{dataset_path}' est un chemin absolu. "
+            f"Donne un chemin relatif au répertoire de données ({DATASET_DIR})."
+        )
+
+    candidate = (DATASET_DIR / raw).resolve()
+    try:
+        candidate.relative_to(DATASET_DIR)
+    except ValueError:
+        raise UnsafeDatasetPathError(
+            f"Chemin non autorisé : '{dataset_path}' sort du répertoire de données "
+            f"autorisé ({DATASET_DIR})."
+        ) from None
+
+    return candidate
 
 # --------------------------------------------------------------------------
 # Reconnaissance flexible des colonnes (français / anglais)
@@ -81,14 +125,15 @@ def _detect_fields(df: pd.DataFrame) -> dict[str, Optional[str]]:
 
 
 def _load_dataframe(dataset_path: str) -> pd.DataFrame:
-    if not os.path.exists(dataset_path):
+    resolved = _resolve_dataset_path(dataset_path)  # lève UnsafeDatasetPathError si hors DATASET_DIR
+    if not resolved.exists():
         raise FileNotFoundError(
-            f"Le fichier '{dataset_path}' est introuvable. "
+            f"Le fichier '{dataset_path}' est introuvable dans {DATASET_DIR}. "
             "Vérifie le chemin transmis par l'utilisateur."
         )
-    if not dataset_path.lower().endswith(".csv"):
+    if resolved.suffix.lower() != ".csv":
         raise ValueError("Seuls les fichiers .csv sont supportés dans ce squelette.")
-    return pd.read_csv(dataset_path)
+    return pd.read_csv(resolved)
 
 
 def _missing_fields_message(required: list[str], detected: dict[str, Optional[str]]) -> Optional[str]:
@@ -214,6 +259,10 @@ def compute_liquidity_ratios(dataset_path: str) -> str:
         current_liabilities = row[detected["current_liabilities"]]
         inventory = row[detected["inventory"]] if detected["inventory"] else 0
 
+        if current_liabilities == 0:
+            lines.append(f"  {label} : passif circulant nul — ratios de liquidité non calculables (division par zéro)")
+            continue
+
         current_ratio = current_assets / current_liabilities
         quick_ratio = (current_assets - inventory) / current_liabilities
 
@@ -251,12 +300,18 @@ def compute_leverage_ratios(dataset_path: str) -> str:
         total_assets = row[detected["total_assets"]]
         total_equity = row[detected["total_equity"]]
 
-        debt_ratio = total_liabilities / total_assets
-        debt_to_equity = total_liabilities / total_equity
+        parts = []
+        if total_assets == 0:
+            parts.append("ratio d'endettement=N/A (actif total nul)")
+        else:
+            parts.append(f"ratio d'endettement={total_liabilities / total_assets:.2f}")
 
-        lines.append(
-            f"  {label} : ratio d'endettement={debt_ratio:.2f}, dette/capitaux propres={debt_to_equity:.2f}"
-        )
+        if total_equity == 0:
+            parts.append("dette/capitaux propres=N/A (capitaux propres nuls)")
+        else:
+            parts.append(f"dette/capitaux propres={total_liabilities / total_equity:.2f}")
+
+        lines.append(f"  {label} : " + ", ".join(parts))
 
     return "\n".join(lines)
 
@@ -292,11 +347,16 @@ def analyze_trend(dataset_path: str) -> str:
     for idx, row in df.iterrows():
         label = row[period_col] if period_col else f"ligne {idx}"
         if prev_row is not None:
-            rev_growth = (row[revenue_col] - prev_row[revenue_col]) / prev_row[revenue_col] * 100
-            ni_growth = (row[net_income_col] - prev_row[net_income_col]) / prev_row[net_income_col] * 100
-            lines.append(
-                f"  {label} : CA {rev_growth:+.1f}%, résultat net {ni_growth:+.1f}%"
+            prev_revenue = prev_row[revenue_col]
+            prev_net_income = prev_row[net_income_col]
+
+            rev_part = "CA N/A (valeur nulle l'année précédente)" if prev_revenue == 0 else (
+                f"CA {(row[revenue_col] - prev_revenue) / prev_revenue * 100:+.1f}%"
             )
+            ni_part = "résultat net N/A (valeur nulle l'année précédente)" if prev_net_income == 0 else (
+                f"résultat net {(row[net_income_col] - prev_net_income) / prev_net_income * 100:+.1f}%"
+            )
+            lines.append(f"  {label} : {rev_part}, {ni_part}")
         prev_row = row
 
     return "\n".join(lines)
@@ -617,9 +677,10 @@ def _get_rag_vectorstore():
         from langchain_chroma import Chroma
         from langchain_ollama import OllamaEmbeddings
 
+        ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or None
         _RAG_VECTORSTORE = Chroma(
             persist_directory=persist_dir,
-            embedding_function=OllamaEmbeddings(model="nomic-embed-text"),
+            embedding_function=OllamaEmbeddings(model="nomic-embed-text", base_url=ollama_base_url),
             collection_name="financeagent_knowledge",
         )
     except Exception as exc:  # noqa: BLE001 — on veut un message utile pour l'agent, pas un crash
