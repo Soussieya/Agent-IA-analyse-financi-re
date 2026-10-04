@@ -3,225 +3,399 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FinanceAgent — Registre d'analyse</title>
+<title>FinanceAgent — Analyse financière assistée par IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #F6F5F0;
+    --paper: #F7F6F2;
     --paper-raised: #FFFFFF;
-    --paper-line: #DAD6C8;
-    --ink: #1B2A22;
-    --ink-soft: #5B6960;
-    --forest: #2F5233;
-    --forest-soft: #E4EBE3;
-    --red: #8C2F2F;
-    --red-soft: #F3E6E4;
-    --gold: #A9862F;
-    --shadow: 0 1px 2px rgba(27,42,34,0.04), 0 8px 24px rgba(27,42,34,0.06);
+    --sidebar-bg: #F0EEE6;
+    --paper-line: #E0DCD0;
+    --ink: #1A2A22;
+    --ink-soft: #5C6B62;
+    --ink-muted: #8A968E;
+    --forest: #2C5A38;
+    --forest-hover: #234A2E;
+    --forest-soft: #E6F0E8;
+    --forest-glow: rgba(44, 90, 56, 0.12);
+    --red: #9B2C2C;
+    --red-soft: #F8E9E7;
+    --gold: #B08D2E;
+    --shadow-sm: 0 1px 2px rgba(26,42,34,0.04);
+    --shadow: 0 2px 8px rgba(26,42,34,0.06), 0 8px 24px rgba(26,42,34,0.04);
+    --shadow-lg: 0 4px 16px rgba(26,42,34,0.08), 0 16px 40px rgba(26,42,34,0.06);
+    --radius: 8px;
+    --radius-sm: 6px;
     --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
     --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   }
 
   :root[data-theme="dark"] {
-    --paper: #171C18;
-    --paper-raised: #1F261F;
-    --paper-line: #38423A;
-    --ink: #EAE7DC;
-    --ink-soft: #93A093;
-    --forest: #7FB88A;
-    --forest-soft: #223026;
+    --paper: #141916;
+    --paper-raised: #1C231E;
+    --sidebar-bg: #101512;
+    --paper-line: #2E3831;
+    --ink: #E8E6DC;
+    --ink-soft: #9AAB9E;
+    --ink-muted: #6B7A70;
+    --forest: #7EC48A;
+    --forest-hover: #92D09C;
+    --forest-soft: #1E2E22;
+    --forest-glow: rgba(126, 196, 138, 0.15);
     --red: #E08A7D;
     --red-soft: #3A2422;
     --gold: #D4B45E;
-    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow: 0 2px 8px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.2);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.25);
   }
 
-  * { box-sizing: border-box; }
-
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 
   body {
-    margin: 0;
     background: var(--paper);
     color: var(--ink);
     font-family: var(--serif);
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.55;
+    transition: background 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 300px 1fr;
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    transition: background 0.25s ease, color 0.25s ease;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  .sheet {
-    width: 100%;
-    max-width: 900px;
-    padding: 36px 32px 28px;
+  /* ---------- SIDEBAR ---------- */
+  aside {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--paper-line);
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    gap: 28px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
 
-  header {
+  .brand {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 2px solid var(--ink);
-    padding-bottom: 16px;
-    margin-bottom: 4px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--forest);
+    color: var(--paper);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .brand h1 {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
-    margin: 0;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
   .brand h1 em {
     font-style: italic;
     font-weight: 400;
     color: var(--forest);
   }
+
   .brand .tagline {
     font-family: var(--mono);
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-top: 4px;
+    font-size: 11px;
+    color: var(--ink-muted);
     letter-spacing: 0.02em;
+    line-height: 1.4;
+    padding-left: 48px;
   }
 
-  .header-controls {
+  .sidebar-section {
+    border-top: 1px solid var(--paper-line);
+    padding-top: 20px;
+  }
+
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  /* Status pills */
+  .status-group {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
     gap: 8px;
   }
 
-  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .pill-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 
   .pill {
     font-family: var(--mono);
     font-size: 11px;
-    padding: 3px 9px;
+    padding: 4px 10px;
     border-radius: 999px;
     border: 1px solid var(--paper-line);
     color: var(--ink-soft);
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    background: var(--paper-raised);
+    transition: all 0.2s ease;
   }
+
   .pill .dot {
     display: inline-block;
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    margin-right: 5px;
-    background: var(--ink-soft);
-    position: relative;
-    top: -1px;
+    margin-right: 6px;
+    background: var(--ink-muted);
   }
-  .pill.ok { color: var(--forest); border-color: var(--forest); }
-  .pill.ok .dot { background: var(--forest); box-shadow: 0 0 0 3px var(--forest-soft); }
-  .pill.down { color: var(--red); border-color: var(--red); }
-  .pill.down .dot { background: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+
+  .pill.ok {
+    color: var(--forest);
+    border-color: var(--forest);
+    background: var(--forest-soft);
+  }
+  .pill.ok .dot {
+    background: var(--forest);
+    box-shadow: 0 0 0 3px var(--forest-glow);
+  }
+
+  .pill.down {
+    color: var(--red);
+    border-color: var(--red);
+    background: var(--red-soft);
+  }
+  .pill.down .dot {
+    background: var(--red);
+    box-shadow: 0 0 0 3px rgba(155, 44, 44, 0.15);
+  }
 
   .theme-toggle {
     font-family: var(--mono);
     font-size: 11px;
-    background: none;
+    background: var(--paper-raised);
     border: 1px solid var(--paper-line);
     color: var(--ink-soft);
     border-radius: 999px;
-    padding: 3px 10px;
+    padding: 6px 14px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+    margin-top: 4px;
   }
-  .theme-toggle:hover { border-color: var(--ink); color: var(--ink); }
+  .theme-toggle:hover {
+    border-color: var(--ink-soft);
+    color: var(--ink);
+    background: var(--paper);
+  }
 
-  .config {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 20px;
-    padding: 18px 0 20px;
-    border-bottom: 1px solid var(--paper-line);
-    margin-bottom: 20px;
+  /* Fields */
+  .field {
+    margin-bottom: 14px;
   }
+  .field:last-child { margin-bottom: 0; }
 
   .field label {
     display: block;
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    margin-bottom: 4px;
+    color: var(--ink-muted);
+    margin-bottom: 5px;
+    font-weight: 500;
   }
 
   .field input {
     width: 100%;
-    border: none;
-    border-bottom: 1px solid var(--paper-line);
-    background: transparent;
+    border: 1px solid var(--paper-line);
+    background: var(--paper-raised);
     font-family: var(--mono);
-    font-size: 14px;
+    font-size: 13px;
     color: var(--ink);
-    padding: 5px 2px;
+    padding: 9px 12px;
     outline: none;
-    transition: border-color 0.15s ease;
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .field input:focus { border-bottom-color: var(--forest); }
-  .field input::placeholder { color: var(--paper-line); }
+  .field input:focus {
+    border-color: var(--forest);
+    box-shadow: 0 0 0 3px var(--forest-glow);
+  }
+  .field input::placeholder { color: var(--ink-muted); opacity: 0.7; }
 
-  .field.api {
-    grid-column: 1 / -1;
-    opacity: 0.6;
-  }
+  .field.api { opacity: 0.75; }
   .field.api input { font-size: 12px; }
 
-  main {
-    flex: 1;
+  /* Capabilities */
+  .capability-list {
+    list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
-    padding-bottom: 24px;
+    gap: 8px;
+  }
+  .capability-list li {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .capability-list li::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--forest);
+    margin-top: 6px;
+    flex-shrink: 0;
   }
 
+  /* ---------- MAIN ---------- */
+  main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--paper);
+  }
+
+  .thread-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 48px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* Empty state */
   .empty-state {
     margin: auto;
     text-align: center;
     color: var(--ink-soft);
-    max-width: 440px;
+    max-width: 520px;
+    padding: 20px;
   }
-  .empty-state svg { opacity: 0.5; margin-bottom: 14px; }
-  .empty-state p:first-of-type {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
-  }
-  .empty-state p:last-of-type { font-size: 15px; line-height: 1.6; }
 
+  .empty-state .icon-wrap {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: var(--forest-soft);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--forest);
+  }
+
+  .empty-state p.eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .empty-state h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+
+  .empty-state p.desc {
+    font-size: 15px;
+    line-height: 1.65;
+    margin-bottom: 28px;
+    color: var(--ink-soft);
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .suggestion-chip {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--forest);
+    background: var(--paper-raised);
+    border: 1px solid var(--paper-line);
+    border-radius: 999px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .suggestion-chip:hover {
+    border-color: var(--forest);
+    background: var(--forest-soft);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+  .suggestion-chip:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Entries */
   @keyframes riseIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   .entry {
-    border-bottom: 1px solid var(--paper-line);
-    padding-bottom: 18px;
-    animation: riseIn 0.3s ease both;
+    max-width: 780px;
+    animation: riseIn 0.35s ease both;
+    padding-bottom: 8px;
   }
-  .entry:last-child { border-bottom: none; }
 
   .entry-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .entry .who {
@@ -229,68 +403,98 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--ink-soft);
+    color: var(--ink-muted);
+    font-weight: 500;
   }
-
-  .entry.user .who::before { content: "Vous demandez"; }
-  .entry.agent .who::before { content: "FinanceAgent répond"; }
-  .entry.error .who::before { content: "Erreur"; }
+  .entry.user .who::before { content: "Vous"; }
+  .entry.agent .who::before { content: "FinanceAgent"; }
+  .entry.error .who::before { content: "Erreur"; color: var(--red); }
 
   .copy-btn {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 11px;
     background: none;
-    border: none;
-    color: var(--ink-soft);
+    border: 1px solid transparent;
+    color: var(--ink-muted);
     cursor: pointer;
-    padding: 2px 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
     opacity: 0;
-    transition: opacity 0.15s ease, color 0.15s ease;
+    transition: all 0.2s ease;
   }
   .entry.agent:hover .copy-btn { opacity: 1; }
-  .copy-btn:hover { color: var(--forest); }
-  .copy-btn.copied { opacity: 1; color: var(--forest); }
+  .copy-btn:hover {
+    color: var(--forest);
+    border-color: var(--paper-line);
+    background: var(--paper-raised);
+  }
+  .copy-btn.copied {
+    opacity: 1;
+    color: var(--forest);
+  }
+
+  .entry .body {
+    font-size: 15.5px;
+    line-height: 1.65;
+  }
 
   .entry.user .body {
     font-style: italic;
     color: var(--ink-soft);
+    background: var(--paper-raised);
+    border: 1px solid var(--paper-line);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
   }
 
-  .entry.agent .body { white-space: pre-wrap; }
+  .entry.agent .body {
+    white-space: pre-wrap;
+    color: var(--ink);
+  }
 
   .entry.error .body {
     color: var(--red);
     background: var(--red-soft);
-    padding: 10px 12px;
+    padding: 14px 16px;
     font-family: var(--mono);
     font-size: 13px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(155, 44, 44, 0.2);
   }
 
+  /* Thinking indicator */
   .thinking {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-family: var(--mono);
-    font-size: 12px;
-    color: var(--ink-soft);
-    padding-bottom: 18px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    padding: 8px 0 16px;
   }
-  .thinking .dots { display: inline-flex; gap: 3px; }
+  .thinking .dots {
+    display: inline-flex;
+    gap: 4px;
+  }
   .thinking .dots span {
-    width: 4px; height: 4px; border-radius: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
     background: var(--forest);
-    animation: pulse 1.1s ease-in-out infinite;
+    animation: pulse 1.2s ease-in-out infinite;
   }
   .thinking .dots span:nth-child(2) { animation-delay: 0.15s; }
   .thinking .dots span:nth-child(3) { animation-delay: 0.3s; }
+
   @keyframes pulse {
-    0%, 60%, 100% { opacity: 0.25; transform: scale(0.85); }
+    0%, 60%, 100% { opacity: 0.25; transform: scale(0.8); }
     30% { opacity: 1; transform: scale(1); }
   }
 
+  /* Tool traces */
   details.trace {
-    margin-top: 10px;
+    margin-top: 14px;
     font-family: var(--mono);
     font-size: 12.5px;
   }
@@ -298,32 +502,49 @@
     cursor: pointer;
     color: var(--forest);
     list-style: none;
+    font-weight: 500;
+    padding: 6px 0;
+    transition: color 0.15s ease;
   }
+  details.trace summary:hover { color: var(--forest-hover); }
   details.trace summary::before { content: "▸ "; }
   details.trace[open] summary::before { content: "▾ "; }
   details.trace summary::-webkit-details-marker { display: none; }
 
   .trace-item {
-    margin-top: 8px;
-    padding: 10px 12px;
+    margin-top: 10px;
+    padding: 12px 14px;
     background: var(--forest-soft);
     border-left: 3px solid var(--forest);
-    border-radius: 0 2px 2px 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
-  .trace-item .tool-name { font-weight: 600; color: var(--forest); margin-bottom: 4px; }
+  .trace-item .tool-name {
+    font-weight: 600;
+    color: var(--forest);
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
   .trace-item pre {
     margin: 0;
     white-space: pre-wrap;
     font-family: var(--mono);
     font-size: 12px;
     color: var(--ink);
+    line-height: 1.5;
+  }
+
+  /* Composer */
+  .composer-wrap {
+    border-top: 1px solid var(--paper-line);
+    padding: 20px 48px 24px;
+    background: var(--paper);
   }
 
   .composer {
     display: flex;
-    gap: 10px;
-    border-top: 2px solid var(--ink);
-    padding-top: 16px;
+    gap: 12px;
+    max-width: 780px;
+    align-items: flex-end;
   }
 
   .composer textarea {
@@ -331,104 +552,202 @@
     resize: none;
     border: 1px solid var(--paper-line);
     background: var(--paper-raised);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-sm);
     font-family: var(--serif);
     font-size: 15px;
-    padding: 11px 13px;
+    padding: 14px 16px;
     color: var(--ink);
-    min-height: 48px;
+    min-height: 52px;
+    max-height: 160px;
     outline: none;
-    border-radius: 2px;
-    transition: border-color 0.15s ease;
+    border-radius: var(--radius);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1.5;
   }
-  .composer textarea:focus { border-color: var(--forest); }
+  .composer textarea:focus {
+    border-color: var(--forest);
+    box-shadow: 0 0 0 3px var(--forest-glow), var(--shadow-sm);
+  }
+  .composer textarea::placeholder { color: var(--ink-muted); }
 
   .composer button {
     font-family: var(--mono);
     font-size: 13px;
-    letter-spacing: 0.04em;
-    background: var(--ink);
-    color: var(--paper);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    background: var(--forest);
+    color: #fff;
     border: none;
-    padding: 0 22px;
+    padding: 0 24px;
+    height: 52px;
     cursor: pointer;
-    border-radius: 2px;
-    transition: background 0.15s ease, transform 0.1s ease;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    white-space: nowrap;
   }
-  .composer button:hover:not(:disabled) { background: var(--forest); }
-  .composer button:active:not(:disabled) { transform: scale(0.97); }
-  .composer button:disabled { background: var(--ink-soft); cursor: wait; }
+  .composer button:hover:not(:disabled) {
+    background: var(--forest-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(44, 90, 56, 0.25);
+  }
+  .composer button:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .composer button:disabled {
+    background: var(--ink-muted);
+    cursor: wait;
+    transform: none;
+    box-shadow: none;
+  }
 
   .hint {
     font-family: var(--mono);
     font-size: 11px;
-    color: var(--ink-soft);
-    margin-top: 8px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+    max-width: 780px;
   }
   .hint code {
     background: var(--forest-soft);
-    padding: 1px 5px;
-    border-radius: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--forest);
+    font-size: 10.5px;
   }
 
-  @media (max-width: 640px) {
-    .config { grid-template-columns: 1fr; }
-    .sheet { padding: 24px 18px; }
-    header { flex-direction: column; }
-    .header-controls { align-items: flex-start; width: 100%; }
+  /* Responsive */
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    aside {
+      position: relative;
+      height: auto;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      padding: 20px;
+      gap: 20px;
+      border-right: none;
+      border-bottom: 1px solid var(--paper-line);
+    }
+    .brand { flex: 1 1 100%; }
+    .brand .tagline { padding-left: 48px; }
+    .sidebar-section {
+      border-top: none;
+      padding-top: 0;
+      flex: 1 1 auto;
+      min-width: 160px;
+    }
+    .capability-list { display: none; }
+    .thread-scroll { padding: 28px 20px 16px; }
+    .composer-wrap { padding: 16px 20px 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .brand h1 { font-size: 20px; }
+    .suggestion-chip { font-size: 12px; padding: 8px 14px; }
+    .composer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .composer button {
+      height: 46px;
+      width: 100%;
+    }
   }
 </style>
 </head>
 <body>
-  <div class="sheet">
-    <header>
+  <div class="app">
+    <aside>
       <div class="brand">
-        <h1>Finance<em>Agent</em></h1>
-        <div class="tagline">Analyse financière assistée par IA — 100% local</div>
-      </div>
-      <div class="header-controls">
-        <div class="pill-row">
-          <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">vérification…</span></span>
-          <span class="pill" id="modelPill" style="display:none;"></span>
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h1>Finance<em>Agent</em></h1>
         </div>
-        <button class="theme-toggle" id="themeToggle" type="button">☾ mode sombre</button>
+        <div class="tagline">Analyse financière assistée par IA<br>100 % local & confidentiel</div>
       </div>
-    </header>
 
-    <div class="config">
-      <div class="field">
-        <label for="pathA">Fichier A</label>
-        <input id="pathA" type="text" placeholder="etats_financiers.csv" value="etats_financiers.csv" />
+      <div class="sidebar-section" style="border-top:none; padding-top:0;">
+        <div class="status-group">
+          <div class="pill-row">
+            <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">vérification…</span></span>
+          </div>
+          <div class="pill-row">
+            <span class="pill" id="modelPill" style="display:none;"></span>
+          </div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button">☾ Mode sombre</button>
       </div>
-      <div class="field">
-        <label for="pathB">Fichier B (optionnel, pour comparer)</label>
-        <input id="pathB" type="text" placeholder="entreprise_b.csv" />
-      </div>
-      <div class="field api">
-        <label for="apiBase">Adresse de l'API</label>
-        <input id="apiBase" type="text" value="http://localhost:8000" />
-      </div>
-    </div>
 
-    <main id="thread">
-      <div class="empty-state" id="emptyState">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="4" width="28" height="32" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-          <line x1="11" y1="13" x2="29" y2="13" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="11" y1="19" x2="29" y2="19" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="11" y1="25" x2="22" y2="25" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="11" y1="31" x2="18" y2="31" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
-        <p>REGISTRE VIERGE</p>
-        <p>Pose une question sur les fichiers ci-dessus — par exemple « calcule le score de santé financière » ou « compare ces deux entreprises ».</p>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Sources de données</div>
+        <div class="field">
+          <label for="pathA">Fichier principal</label>
+          <input id="pathA" type="text" placeholder="etats_financiers.csv" value="etats_financiers.csv" />
+        </div>
+        <div class="field">
+          <label for="pathB">Fichier de comparaison</label>
+          <input id="pathB" type="text" placeholder="entreprise_b.csv" />
+        </div>
+        <div class="field api">
+          <label for="apiBase">Adresse API</label>
+          <input id="apiBase" type="text" value="http://localhost:8000" />
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Capacités (10 outils)</div>
+        <ul class="capability-list">
+          <li>Inspection du fichier</li>
+          <li>Rentabilité (marge, ROA, ROE)</li>
+          <li>Liquidité générale & réduite</li>
+          <li>Endettement</li>
+          <li>Tendance CA / résultat net</li>
+          <li>Rotation stocks / clients / fournisseurs</li>
+          <li>Besoin en fonds de roulement</li>
+          <li>Score de santé (0-100)</li>
+          <li>Comparaison d’entreprises</li>
+          <li>Recherche RAG (glossaire + secteurs)</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main>
+      <div class="thread-scroll" id="thread">
+        <div class="empty-state" id="emptyState">
+          <div class="icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <p class="eyebrow">Registre d’analyse</p>
+          <h2>Prêt à analyser vos états financiers</h2>
+          <p class="desc">Vérifiez les fichiers dans la barre latérale, puis posez une question ou essayez l’un de ces exemples :</p>
+          <div class="suggestions">
+            <button class="suggestion-chip" type="button">Calcule le score de santé financière</button>
+            <button class="suggestion-chip" type="button">Compare ces deux entreprises</button>
+            <button class="suggestion-chip" type="button">Qu’est-ce que le BFR ?</button>
+            <button class="suggestion-chip" type="button">Quelle est la tendance du CA ?</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <form class="composer" id="composer">
+          <textarea id="queryInput" placeholder="Inspecte les états financiers puis calcule les ratios de rentabilité…" required rows="1"></textarea>
+          <button type="submit" id="sendBtn">Envoyer</button>
+        </form>
+        <div class="hint">Chemins relatifs au dossier où tourne <code>uvicorn</code> · Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne</div>
       </div>
     </main>
-
-    <form class="composer" id="composer">
-      <textarea id="queryInput" placeholder="Inspecte les états financiers puis calcule les ratios de rentabilité…" required></textarea>
-      <button type="submit" id="sendBtn">Envoyer</button>
-    </form>
-    <div class="hint">Les chemins de fichiers sont relatifs au dossier où tourne <code>uvicorn</code>, pas à ce navigateur. Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne.</div>
   </div>
 
 <script>
@@ -446,10 +765,15 @@
   const modelPill = document.getElementById('modelPill');
   const themeToggle = document.getElementById('themeToggle');
 
-  // --- Thème clair/sombre, mémorisé pour la session du navigateur ---
+  // Auto-resize textarea
+  queryInput.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  });
+
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    themeToggle.textContent = theme === 'dark' ? '☀ mode clair' : '☾ mode sombre';
+    themeToggle.textContent = theme === 'dark' ? '☀ Mode clair' : '☾ Mode sombre';
     try { localStorage.setItem('financeagent-theme', theme); } catch (e) {}
   }
   (function initTheme() {
@@ -461,6 +785,14 @@
   themeToggle.addEventListener('click', function () {
     const current = document.documentElement.getAttribute('data-theme');
     applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  document.querySelectorAll('.suggestion-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      queryInput.value = chip.textContent;
+      queryInput.focus();
+      queryInput.dispatchEvent(new Event('input'));
+    });
   });
 
   function addEntry(kind) {
@@ -485,9 +817,7 @@
     el.innerHTML = 'FinanceAgent réfléchit <span class="dots"><span></span><span></span><span></span></span>';
     thread.appendChild(el);
     thread.scrollTop = thread.scrollHeight;
-    return el;
   }
-
   function removeThinkingEntry() {
     const el = document.getElementById('thinkingIndicator');
     if (el) el.remove();
@@ -502,13 +832,13 @@
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'copy-btn';
-    copyBtn.textContent = 'copier';
+    copyBtn.textContent = 'Copier';
     copyBtn.addEventListener('click', function () {
       navigator.clipboard.writeText(answer || '').then(function () {
-        copyBtn.textContent = 'copié ✓';
+        copyBtn.textContent = 'Copié ✓';
         copyBtn.classList.add('copied');
         setTimeout(function () {
-          copyBtn.textContent = 'copier';
+          copyBtn.textContent = 'Copier';
           copyBtn.classList.remove('copied');
         }, 1500);
       });
@@ -527,7 +857,7 @@
       details.className = 'trace';
       details.open = true;
       const summary = document.createElement('summary');
-      summary.textContent = toolCalls.length + ' outil(s) utilisé(s) — valeurs exactes ci-dessous';
+      summary.textContent = toolCalls.length + ' outil' + (toolCalls.length > 1 ? 's' : '') + ' utilisé' + (toolCalls.length > 1 ? 's' : '') + ' — valeurs exactes';
       details.appendChild(summary);
       toolCalls.forEach(function (call) {
         const item = document.createElement('div');
@@ -557,14 +887,14 @@
       const res = await fetch(apiBase.value.replace(/\/$/, '') + '/health');
       if (!res.ok) throw new Error('bad status');
       const data = await res.json();
-      statusText.textContent = 'serveur connecté';
+      statusText.textContent = 'Serveur connecté';
       statusPill.className = 'pill ok';
       if (data.model) {
-        modelPill.textContent = 'modèle : ' + data.model;
-        modelPill.style.display = 'inline-block';
+        modelPill.textContent = 'Modèle : ' + data.model;
+        modelPill.style.display = 'inline-flex';
       }
     } catch (e) {
-      statusText.textContent = 'serveur injoignable';
+      statusText.textContent = 'Serveur injoignable';
       statusPill.className = 'pill down';
       modelPill.style.display = 'none';
     }
@@ -577,9 +907,10 @@
 
     addUserEntry(query);
     queryInput.value = '';
+    queryInput.style.height = 'auto';
     sendBtn.disabled = true;
     sendBtn.textContent = 'En cours…';
-    const thinking = addThinkingEntry();
+    addThinkingEntry();
 
     const payload = { query: query };
     if (pathA.value.trim()) payload.dataset_path = pathA.value.trim();
@@ -591,21 +922,19 @@
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: JSON.stringify(payload)
       });
-
       if (!res.ok) {
         const text = await res.text();
         throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
       }
-
       const data = await res.json();
       removeThinkingEntry();
       addAgentEntry(data.answer, data.tool_calls);
-      statusText.textContent = 'serveur connecté';
+      statusText.textContent = 'Serveur connecté';
       statusPill.className = 'pill ok';
     } catch (err) {
       removeThinkingEntry();
-      addErrorEntry('Impossible de contacter l\'agent : ' + err.message + '. Vérifie qu\'uvicorn tourne bien sur ' + apiBase.value + '.');
-      statusText.textContent = 'serveur injoignable';
+      addErrorEntry('Impossible de contacter l\'agent : ' + err.message + '. Vérifiez qu\'uvicorn tourne bien sur ' + apiBase.value + '.');
+      statusText.textContent = 'Serveur injoignable';
       statusPill.className = 'pill down';
     } finally {
       sendBtn.disabled = false;
